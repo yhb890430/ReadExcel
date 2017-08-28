@@ -7,6 +7,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.net.URL;
 import java.util.HashSet;
@@ -200,7 +201,17 @@ public class ReadExcel {
     public void init(){
 
         JFrame frame = new JFrame("工装寿命计算");
+        frame.setSize(new Dimension(400,400));
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        //创建面板，一个frame可以有多个面板，类似于div
+        JPanel panel = new JPanel();
+        // 添加面板
+        frame.add(panel);
+
+
+        //显示窗口
+        frame.setVisible(true);
     }
 
     public static void main(String[] args) {
