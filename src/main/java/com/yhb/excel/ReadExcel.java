@@ -7,7 +7,10 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.URL;
 import java.util.HashSet;
@@ -15,23 +18,24 @@ import java.util.Set;
 
 public class ReadExcel {
 
-    private static  final Logger LOGGER = Logger.getLogger(ReadExcel.class);
+    private static final Logger LOGGER = Logger.getLogger(ReadExcel.class);
 
     private static final int STANDARDVALUE0 = 1000;
     private static final int STANDARDVALUE1 = 30000;
     private static final int STANDARDVALUE2 = 50000;
     private static final int STANDARDVALUE3 = 80000;
 
-    static{
+    static {
         //初始化LOG4J
         URL resource = ReadExcel.class.getResource("/log4j.properties");
         PropertyConfigurator.configure(resource);
     }
 
-    public void readExcel(){
+    public void readExcel(File file) {
 
         try {
-            FileInputStream fis = new FileInputStream(new File("D:/工装寿命管理.xlsx"));
+            //new File("D:/工装寿命管理.xlsx")
+            FileInputStream fis = new FileInputStream(file);
             XSSFWorkbook workbook = new XSSFWorkbook(fis);
 
             XSSFSheet sheet = workbook.getSheetAt(0);
@@ -41,10 +45,10 @@ public class ReadExcel {
 
             for (Row row : sheet) {
 
-                if(row.getRowNum() <3){
+                if (row.getRowNum() < 3) {
                     continue;
                 }
-                if(row == null){
+                if (row == null) {
                     continue;
                 }
                 Cell cell3 = row.getCell(3);
@@ -53,36 +57,36 @@ public class ReadExcel {
                 Cell cell5 = row.getCell(5);
                 Cell cell9 = row.getCell(9);
 
-                if(cell3 != null){
+                if (cell3 != null) {
                     CellType cellTypeEnum3 = cell3.getCellTypeEnum();
-                    if(cellTypeEnum3 != null && cellTypeEnum3.equals(CellType.NUMERIC)){
-                        if(cell5.getCellTypeEnum().equals(CellType.NUMERIC)){
+                    if (cellTypeEnum3 != null && cellTypeEnum3.equals(CellType.NUMERIC)) {
+                        if (cell5.getCellTypeEnum().equals(CellType.NUMERIC)) {
                             Double value3 = cell3.getNumericCellValue();
                             Double value5 = cell5.getNumericCellValue();
-                            orgData(value3,value5,yellowSet,redSet,row);
+                            orgData(value3, value5, yellowSet, redSet, row);
                         }
 
                     }
                 }
-                if(cell7 != null){
+                if (cell7 != null) {
                     CellType cellTypeEnum7 = cell7.getCellTypeEnum();
-                    if(cellTypeEnum7 != null && cellTypeEnum7.equals(CellType.NUMERIC)){
-                        if(cell9.getCellTypeEnum().equals(CellType.NUMERIC)){
-                            Double value7= cell7.getNumericCellValue();
+                    if (cellTypeEnum7 != null && cellTypeEnum7.equals(CellType.NUMERIC)) {
+                        if (cell9.getCellTypeEnum().equals(CellType.NUMERIC)) {
+                            Double value7 = cell7.getNumericCellValue();
                             Double value9 = cell9.getNumericCellValue();
-                            orgData(value7,value9,yellowSet,redSet,row);
+                            orgData(value7, value9, yellowSet, redSet, row);
                         }
                     }
                 }
             }
 
             //插入数据(工装更换，工装终止)
-            int rowNum = sheet.getLastRowNum()+2;
+            int rowNum = sheet.getLastRowNum() + 2;
             //合并单元格，用于填入一级标题
-            CellRangeAddress cra=new CellRangeAddress(rowNum, rowNum, 0, 1);
+            CellRangeAddress cra = new CellRangeAddress(rowNum, rowNum, 0, 1);
             sheet.addMergedRegion(cra);
             XSSFRow row1 = sheet.createRow(rowNum);
-            CellStyle yellowStyle =  createStyle(workbook,IndexedColors.YELLOW);
+            CellStyle yellowStyle = createStyle(workbook, IndexedColors.YELLOW);
             XSSFCell cell = row1.createCell(0);
             cell.setCellValue("工装更换");
             cell.setCellStyle(yellowStyle);
@@ -96,14 +100,14 @@ public class ReadExcel {
             cell1.setCellValue("物料号");
 
             int i = 1;
-            createRow(yellowSet, rowNum ,i,sheet);
+            createRow(yellowSet, rowNum, i, sheet);
 
             //合并单元格，用于填入一级标题
             rowNum += 1;
-            CellRangeAddress cra1=new CellRangeAddress(rowNum, rowNum, 0, 1);
+            CellRangeAddress cra1 = new CellRangeAddress(rowNum, rowNum, 0, 1);
             sheet.addMergedRegion(cra1);
             XSSFRow redRow = sheet.createRow(rowNum);
-            CellStyle redStyle = createStyle(workbook,IndexedColors.RED);
+            CellStyle redStyle = createStyle(workbook, IndexedColors.RED);
 
             XSSFCell redRowCell = redRow.createCell(0);
             redRowCell.setCellValue("工装终止");
@@ -114,18 +118,18 @@ public class ReadExcel {
             cell3.setCellValue("序号");
             cell4.setCellValue("物料号");
             i = 1;
-            createRow(redSet, rowNum ,i,sheet);
-            saveExcel(workbook);
+            createRow(redSet, rowNum, i, sheet);
+            saveExcel(workbook,file.getAbsolutePath());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            LOGGER.error("未去读取到Excel文件！",e);
+            LOGGER.error("未去读取到Excel文件！", e);
         } catch (IOException e) {
-            LOGGER.error("读取Excel文件异常！",e);
+            LOGGER.error("读取Excel文件异常！", e);
             e.printStackTrace();
         }
     }
 
-    private CellStyle createStyle(XSSFWorkbook workbook,IndexedColors color){
+    private CellStyle createStyle(XSSFWorkbook workbook, IndexedColors color) {
         CellStyle style = workbook.createCellStyle();
         style.setFillForegroundColor(color.getIndex());
         style.setAlignment(HorizontalAlignment.CENTER);
@@ -133,8 +137,8 @@ public class ReadExcel {
         return style;
     }
 
-    private void createRow(Set<String> set,int rowNum,int i,XSSFSheet sheet){
-        for(String value : set){
+    private void createRow(Set<String> set, int rowNum, int i, XSSFSheet sheet) {
+        for (String value : set) {
             rowNum += 1;
             XSSFRow row = sheet.createRow(rowNum);
             XSSFCell cell0 = row.createCell(0);
@@ -145,33 +149,33 @@ public class ReadExcel {
         }
     }
 
-    private void orgData(Double value0,Double value1,Set<String> yellowSet,Set<String> redSet,Row row){
-        switch (value0.intValue()){
+    private void orgData(Double value0, Double value1, Set<String> yellowSet, Set<String> redSet, Row row) {
+        switch (value0.intValue()) {
             case 1000:
-                if(value1.intValue() >= STANDARDVALUE0){
+                if (value1.intValue() >= STANDARDVALUE0) {
                     redSet.add(row.getCell(1).getStringCellValue());
-                }else if(value1.intValue() >= 800 && value1.intValue() < STANDARDVALUE0){
+                } else if (value1.intValue() >= 800 && value1.intValue() < STANDARDVALUE0) {
                     yellowSet.add(row.getCell(1).getStringCellValue());
                 }
                 break;
             case 30000:
-                if(value1.intValue() >= STANDARDVALUE1){
+                if (value1.intValue() >= STANDARDVALUE1) {
                     redSet.add(row.getCell(1).getStringCellValue());
-                }else if(value1.intValue() >= 25000 && value1.intValue() < STANDARDVALUE1){
+                } else if (value1.intValue() >= 25000 && value1.intValue() < STANDARDVALUE1) {
                     yellowSet.add(row.getCell(1).getStringCellValue());
                 }
                 break;
             case 50000:
-                if(value1.intValue() >= STANDARDVALUE2){
+                if (value1.intValue() >= STANDARDVALUE2) {
                     redSet.add(row.getCell(1).getStringCellValue());
-                }else if(value1.intValue() >= 45000 && value1.intValue() < STANDARDVALUE2){
+                } else if (value1.intValue() >= 45000 && value1.intValue() < STANDARDVALUE2) {
                     yellowSet.add(row.getCell(1).getStringCellValue());
                 }
                 break;
             case 80000:
-                if(value1.intValue() >= STANDARDVALUE3){
+                if (value1.intValue() >= STANDARDVALUE3) {
                     redSet.add(row.getCell(1).getStringCellValue());
-                }else if(value1.intValue() >= 70000 && value1.intValue() < STANDARDVALUE3){
+                } else if (value1.intValue() >= 70000 && value1.intValue() < STANDARDVALUE3) {
                     yellowSet.add(row.getCell(1).getStringCellValue());
                 }
                 break;
@@ -182,12 +186,13 @@ public class ReadExcel {
 
     /**
      * 保存工作薄
+     *
      * @param wb
      */
-    private void saveExcel(XSSFWorkbook wb) {
+    private void saveExcel(XSSFWorkbook wb,String filePath) {
         FileOutputStream fileOut;
         try {
-            fileOut = new FileOutputStream("D:/工装寿命管理_new.xlsx");
+            fileOut = new FileOutputStream(filePath);
             wb.write(fileOut);
             fileOut.close();
         } catch (FileNotFoundException e) {
@@ -198,16 +203,33 @@ public class ReadExcel {
 
     }
 
-    public void init(){
+    public void init() {
 
         JFrame frame = new JFrame("工装寿命计算");
-        frame.setSize(new Dimension(400,400));
+        frame.setSize(new Dimension(400, 400));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         //创建面板，一个frame可以有多个面板，类似于div
         JPanel panel = new JPanel();
         // 添加面板
         frame.add(panel);
+
+        final JButton button = new JButton("上传文件");
+
+        panel.add(button);
+
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileFilter(new FileNameExtensionFilter("限定xlsx文件","xlsx"));
+                int returnVal = chooser.showOpenDialog(button);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    File file = chooser.getSelectedFile();
+                    //读取excel文件
+                    readExcel(file);
+                }
+            }
+        });
 
 
         //显示窗口
@@ -218,7 +240,8 @@ public class ReadExcel {
 
         ReadExcel readExcel = new ReadExcel();
 
-        readExcel.readExcel();
+        //readExcel.readExcel();
+        readExcel.init();
 
     }
 
